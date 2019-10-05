@@ -54,6 +54,38 @@ instacart %>%
   ggplot(aes(x = aisle_id, y = n_obs)) +
   geom_col() 
 
+#table of the most popular items “baking ingredients”, “dog food care”, and “packaged vegetables fruits”
+instacart_1 =
+instacart %>%
+  filter(aisle == "baking ingredients" | aisle == "dog food care"| aisle == "packed vegetables fruits") %>%
+  group_by(aisle, product_name) %>%
+  summarize(n_obs = n()) %>%
+  arrange(desc(n_obs))
+
+  pivot_wider(
+    names_from = aisle, 
+    values_from = product_name
+  )
+  
+#table of the mean hour of the day when Pink Lady apples and Coffee are bought each day of the week
+instacart %>%
+  filter(product_name == "Pink Lady Apple" | product_name == "Coffee Ice Cream") %>%
+   mutate(order_dow = recode(order_dow, "0" = "Mon", 
+                                "1" = "Tues", 
+                                "2" = "Weds", 
+                                "3" = "Thurs", 
+                                "4" = "Fri", 
+                                "5" = "Sat",
+                                "6" = "Sun")) %>%
+  group_by(product_name, order_dow) %>%
+  summarize(mean_hour_of_day = mean(order_hour_of_day)) %>%
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_hour_of_day
+  ) 
+  ##instacart[c("Mon", "Tues", "Weds", "Thurs", "Fri", "Sat", "Sun")]
+ 
+  
 ```
 
 There are 134 aisles in this data set. Aisles 83, 24, 123, and 120 have the most items ordered from them. 
