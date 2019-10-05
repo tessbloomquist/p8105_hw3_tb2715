@@ -8,7 +8,52 @@ output: gitbub_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(p8105.datasets)
-data("instacart")
+library(tidyverse)
+library(viridis)
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
+##Question 1
+```{r}
+library(p8105.datasets)
+data("instacart") 
+
+instacart = 
+   janitor::clean_names(instacart) %>%
+  drop_na()
+
+#identify number of aisles
+instacart %>%
+  count(aisle_id) 
+
+#arrange aisles by number of goods in an aisle
+instacart %>%
+  group_by(aisle_id) %>%
+  summarize(n_obs = n()) %>%
+  arrange(desc(n_obs))
+
+#plot of aisles with more than 10,000 items. FIX THIS.  
+instacart %>%
+  group_by(aisle_id) %>%
+  summarize(n_obs = n()) %>% 
+  filter(n_obs > 10000) %>%
+  ggplot(aes(x = aisle_id, y = n_obs)) +
+  geom_col() 
+
+```
+
+There are 134 aisles in this data set. Aisles 83, 24, 123, and 120 have the most items ordered from them. 
