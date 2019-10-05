@@ -1,0 +1,14 @@
+---
+title: "p8105_hw3_tb2715"
+author: "Tess"
+date: "10/5/2019"
+output: gitbub_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(p8105.datasets)
+data("instacart")
+```
+
