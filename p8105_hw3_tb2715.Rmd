@@ -68,11 +68,10 @@ instacart %>%
   filter(aisle == "baking ingredients" | aisle == "dog food care"| aisle == "packed vegetables fruits") %>%
   group_by(aisle, product_name) %>%
   summarize(n_obs = n()) %>%
-  arrange(desc(n_obs))
-
+  arrange(desc(n_obs)) %>%
   pivot_wider(
     names_from = aisle, 
-    values_from = product_name
+    values_from = n_obs
   )
 ```
 
@@ -91,9 +90,77 @@ instacart %>%
   summarize(mean_hour_of_day = mean(order_hour_of_day)) %>%
   pivot_wider(
     names_from = order_dow,
-    values_from = mean_hour_of_day
-  ) 
-  ##instacart[c("Mon", "Tues", "Weds", "Thurs", "Fri", "Sat", "Sun")]
+    values_from = mean_hour_of_day) %>%
+    select("Mon", "Tues", "Weds", "Thurs", "Fri", "Sat", "Sun")
 ```
 
+##Question 2
+```{r}
+data("brfss_smart2010") 
+
+brfss =
+  janitor::clean_names(brfss_smart2010) 
+
+brfss =
+  brfss %>%
+  filter(topic == "Overall Health") %>% 
+  mutate(
+    as.factor(response)
+  ) %>%
+  arrange(response, "Excellent", "Very Good", "Good", "Fair", "Poor")
+
+#HOW TO ARRANGE#%>%
+ # arrange(response, "Excellent", "Very Good", "Good", "Fair", "Poor")
+
+```
+
+#States observed at 7 or more locations
+```{r}
+brfss %>% 
+  filter(year == "2002") %>%
+  group_by(locationabbr, locationdesc) %>%
+  summarize(n = n())
+```
+
+##Question 3
+```{r}
+#read in data file
+accel = read.csv(file = "./data/accel_data.csv")
+
+accel_tidy = 
+  janitor::clean_names(accel) %>%
+  mutate(weekend = if_else(day == "Saturday" | day == "Sunday", "weekend", "weekday")) %>%
+  pivot_longer(
+    activity_1:activity_1440, 
+    names_to = "activity", 
+    values_to = "activity_counts"
+  ) 
+  
+###col_types = "ddcccd"
+```
+
+#aggregate across a day to create total activity variable
+```{r}
+daily_accel_tidy =
+  accel_tidy %>%
+  group_by(day_id) %>%
+  mutate(total_activity = sum(activity_counts)) %>%
+  distinct(total_activity) %>%
+  select(day_id, total_activity)
+
+daily_accel_tidy %>%
+  ggplot(aes(x = day_id, y = total_activity)) +
+  geom_point() +
+  geom_smooth()
+```
+
+#create plot to show fluctuation over each day
+##FIX THIS
+```{r}
+accel_tidy %>%
+  group_by(day_id) %>%
+  mutate(as.numeric(activity)) %>%
+  ggplot(aes(x = activity, y = activity_counts, color = day_id)) +
+   geom_point() 
+```
 
