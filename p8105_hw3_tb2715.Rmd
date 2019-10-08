@@ -103,11 +103,9 @@ instacart %>%
 ```{r}
 data("brfss_smart2010") 
 
+#rename dataset and clean names/data
 brfss =
-  janitor::clean_names(brfss_smart2010) 
-
-brfss1 =
-  brfss %>%
+  janitor::clean_names(brfss_smart2010)  %>%
   filter(topic == "Overall Health") %>% 
   mutate(
     as.factor(response)
@@ -122,11 +120,27 @@ brfss1 =
 
 #States observed at 7 or more locations
 ```{r}
+#states with 7 or more testing locations in 2002
 brfss %>% 
   filter(year == "2002") %>%
-  group_by(locationabbr, locationdesc) %>%
-  summarize(n = n())
+  group_by(locationabbr) %>%
+  distinct(locationdesc) %>%
+  summarize(total_testing_location = n()) %>%
+  filter(total_testing_location >= 7) %>%
+  arrange(total_testing_location)
+
+#states with 7 or more testing locations in 2010
+location2 =
+brfss %>% 
+  filter(year == "2010") %>%
+  group_by(locationabbr) %>%
+  distinct(locationdesc) %>%
+  summarize(total_testing_location = n()) %>%
+  filter(total_testing_location >= 7) %>%
+  arrange(total_testing_location)
 ```
+
+
 
 ##Question 3
 ```{r}
