@@ -127,19 +127,55 @@ brfss %>%
   distinct(locationdesc) %>%
   summarize(total_testing_location = n()) %>%
   filter(total_testing_location >= 7) %>%
-  arrange(total_testing_location)
+  arrange(total_testing_location) %>%
+  knitr::kable(digits = 1)
 
 #states with 7 or more testing locations in 2010
-location2 =
 brfss %>% 
   filter(year == "2010") %>%
   group_by(locationabbr) %>%
   distinct(locationdesc) %>%
   summarize(total_testing_location = n()) %>%
   filter(total_testing_location >= 7) %>%
-  arrange(total_testing_location)
+  arrange(total_testing_location) %>%
+  knitr::kable(digits = 1)
 ```
 
+#Excellent Data in 
+```{r}
+Excellent =
+brfss %>% 
+  filter(response == "Excellent") %>%
+  group_by(locationabbr) %>%
+  mutate(mean_data_value = mean(data_value, na.rm = TRUE)) %>%
+  select(year, locationabbr, mean_data_value) %>%
+  distinct(locationabbr, year, mean_data_value) %>%
+  pivot_wider(
+    names_from = year, 
+    values_from = mean_data_value
+  )
+
+Excellent %>%
+  group_by(locationabbr) %>%
+  ggplot(aes(x = year, y = mean_data_value, color = locationabbr)) + 
+  geom_line() 
+```
+
+#dual plot of 2006 and mean_data_value vs response
+```{r}
+dual_plot = 
+  brfss %>%
+  filter(year == "2006" | year == "2010",
+         locationabbr == "NY") %>%
+  group_by(year, response) %>%
+  summarize(mean_data_value = mean(data_value, na.rm = TRUE)) 
+
+dual_plot %>%
+  ggplot(aes(x = response, y = mean_data_value)) +
+  geom_col() +
+  facet_wrap(~year)
+
+```
 
 
 ##Question 3
