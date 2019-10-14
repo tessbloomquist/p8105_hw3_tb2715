@@ -41,7 +41,7 @@ The instacart data set contains `r nrow(instacart)` rows and `r ncol(instacart)`
 `product_name`: item that was purchased
 `department`: grocery department where the purchased item was located
 
-Based on the dataset and headings, we can determine that as part of user 112108's purchase, they bought Bulgarian yogurt on the 4th day of the week, 10th hour of the day. It was 9 days since their prior order. Additionally, they had purchased this item before and it was located from the yogurt aisle in the dairy/eggs department. 
+Based on the dataset and headings, we can determine that as part of user 112108's purchase, they bought Bulgarian yogurt on the 4th day of the week, 10th hour of the day. It was 9 days since their prior order. Additionally, they had purchased this item before and it was located from the yogurt aisle in the dairy/eggs department.
 
 #identify number of aisles
 ```{r}
