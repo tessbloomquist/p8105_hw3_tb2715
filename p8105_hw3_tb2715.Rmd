@@ -38,15 +38,21 @@ instacart =
 
 #identify number of aisles
 instacart %>%
-  count(aisle_id) 
+  count(aisle_id) %>%
+  summarize(n = n())
+
+n_distinct(pull(instacart, aisle_id))
 ```
 
 #arrange aisles by number of goods in an aisle
 ```{r}
 instacart %>%
-  group_by(aisle_id) %>%
+  group_by(aisle) %>%
   summarize(n_obs = n()) %>%
   arrange(desc(n_obs))
+
+#add rank and then filter <=3
+
 ```
 
 There are 134 aisles in this data set. Aisles 83, 24, 123, and 120 have the most items ordered from them in that respective order. 
@@ -55,13 +61,12 @@ There are 134 aisles in this data set. Aisles 83, 24, 123, and 120 have the most
 #Is there a better way to label?
 ```{r}
 instacart %>%
-  group_by(aisle_id) %>%
+  group_by(aisle) %>%
   summarize(n_obs = n()) %>% 
   filter(n_obs > 10000) %>%
-  ggplot(aes(x = aisle_id, y = n_obs)) +
+  ggplot(aes(x = aisle, y = n_obs)) +
   geom_col() +
-  scale_x_continuous(
-    breaks = c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130)) 
+  theme(axis.text.x = element_text(angle = 90))
 
 ```
 
@@ -71,10 +76,9 @@ instacart %>%
   filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>%
   group_by(aisle, product_name) %>%
   summarize(n_obs = n()) %>%
-  group_by(aisle) %>%
   mutate(ranking = rank(-n_obs)) %>%
   filter(ranking <= 3) %>%
-  arrange(ranking) %>%
+  arrange(aisle, ranking) %>%
   knitr::kable(digits = 1)
 
 ```
@@ -83,7 +87,7 @@ instacart %>%
 ```{r}
 instacart %>%
   filter(product_name == "Pink Lady Apple" | product_name == "Coffee Ice Cream") %>%
-   mutate(order_dow = recode(order_dow, "0" = "Mon", 
+   mutate(order_dow = recode(order_dow, "0" = "Mon", ##do we need to recode here. what # is 0?
                                 "1" = "Tues", 
                                 "2" = "Weds", 
                                 "3" = "Thurs", 
@@ -96,8 +100,19 @@ instacart %>%
     names_from = order_dow,
     values_from = mean_hour_of_day) %>%
     select("Mon", "Tues", "Weds", "Thurs", "Fri", "Sat", "Sun") %>%
-  knitr::kable(digits = 1)
+  knitr::kable()
+
+instacart %>%
+  filter(product_name == "Pink Lady Apple" | product_name == "Coffee Ice Cream") %>%
+  group_by(product_name, order_dow) %>%
+  summarize(mean_hour_of_day = mean(order_hour_of_day)) %>%
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_hour_of_day) %>%
+  knitr::kable()
 ```
+##comment on the results##########
+
 
 ##Question 2
 ```{r}
@@ -107,15 +122,9 @@ data("brfss_smart2010")
 brfss =
   janitor::clean_names(brfss_smart2010)  %>%
   filter(topic == "Overall Health") %>% 
-  mutate(
-    as.factor(response)
-  ) %>%
-  arrange(response, "Excellent", "Very Good", "Good", "Fair", "Poor") %>%
-  fct_reorder(response)
-
-#HOW TO ARRANGE#%>%
- # arrange(response, "Excellent", "Very Good", "Good", "Fair", "Poor")
-
+  filter(response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor") %>%
+  mutate(respone = as.factor(response),
+  response = forcats::fct_relevel(response, c("Poor", "Fair", "Good", "Very good", "Excellent")))
 ```
 
 #States observed at 7 or more locations
@@ -143,13 +152,92 @@ brfss %>%
 
 #Excellent Data in 
 ```{r}
-Excellent =
 brfss %>% 
   filter(response == "Excellent") %>%
-  group_by(locationabbr) %>%
+  group_by(locationabbr, year) %>%
   mutate(mean_data_value = mean(data_value, na.rm = TRUE)) %>%
-  select(year, locationabbr, mean_data_value) %>%
-  distinct(locationabbr, year, mean_data_value) %>%
+    ggplot(aes(x = year, y = mean_data_value, group = locationabbr, color = locationabbr)) + 
+  geom_line() 
+
+```
+
+#dual plot of 2006 and mean_data_value vs response
+```{r}
+brfss %>%
+  filter(year == "2006" | year == "2010",
+         locationabbr == "NY") %>%
+  ggplot(aes(x = response, y = data_value)) +
+  geom_col() +
+  facet_wrap(~year)
+```
+
+
+##Question 3
+```{r}
+accel = read_csv(file = "./data/accel_data.csv")
+
+accel_tidy = 
+  janitor::clean_names(accel) %>%
+  mutate(weekend = if_else(day == "Saturday" | day == "Sunday", "weekend", "weekday")) %>%
+  pivot_longer(
+    activity_1:activity_1440, 
+    names_to = "activity", 
+    values_to = "activity_counts") %>%
+    mutate(activity = as.factor(activity)) 
+
+```
+
+#aggregate across a day to create total activity variable
+```{r}
+daily_accel_tidy =
+accel_tidy %>%
+  group_by(day_id) %>%
+  summarize(total_activity = sum(activity_counts)) %>%
+  knitr::kable(digits = 1)
+
+daily_accel_tidy %>%
+  ggplot(aes(x = day_id, y = total_activity)) +
+  geom_point() +
+  geom_smooth()
+
+accel_tidy %>%
+  ggplot(aes(x = activity, y = activity_counts)) +
+  geom_point() +
+  geom_smooth()
+```
+
+#create plot to show fluctuation over each day
+##FIX THIS
+```{r}
+accel_tidy %>%
+  group_by(day_id) %>%
+  ggplot(aes(x = activity, y = activity_counts, color = day_id)) +
+   geom_point() +
+   theme(axis.text.x = element_text(angle = 90))
+```
+
+##Unused code
+  arrange(desc(rank)) %>%
+  fct_reorder(product_name, ranking)
+  pivot_wider(
+    names_from = product_name, 
+    values_from = n_obs
+  ) %>%
+  
+  
+instacart %>%
+  group_by(aisle_id) %>%
+  summarize(n_obs = n()) %>% 
+  filter(n_obs > 10000) %>%
+  ggplot(aes(x = aisle_id, y = n_obs)) +
+  geom_col() +
+  scale_x_continuous(
+    breaks = c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130)) 
+    
+      select(year, locationabbr, mean_data_value) %>%
+  distinct(locationabbr, year, mean_data_value) 
+
+##%>%
   pivot_wider(
     names_from = year, 
     values_from = mean_data_value
@@ -159,11 +247,8 @@ Excellent %>%
   group_by(locationabbr) %>%
   ggplot(aes(x = year, y = mean_data_value, color = locationabbr)) + 
   geom_line() 
-```
-
-#dual plot of 2006 and mean_data_value vs response
-```{r}
-dual_plot = 
+  
+  dual_plot = 
   brfss %>%
   filter(year == "2006" | year == "2010",
          locationabbr == "NY") %>%
@@ -174,56 +259,12 @@ dual_plot %>%
   ggplot(aes(x = response, y = mean_data_value)) +
   geom_col() +
   facet_wrap(~year)
-
-```
-
-
-##Question 3
-```{r}
-#read in data file
-accel = read.csv(file = "./data/accel_data.csv")
-
-accel_tidy = 
-  janitor::clean_names(accel) %>%
-  mutate(weekend = if_else(day == "Saturday" | day == "Sunday", "weekend", "weekday")) %>%
-  pivot_longer(
-    activity_1:activity_1440, 
-    names_to = "activity", 
-    values_to = "activity_counts"
-  ) 
   
-###col_types = "ddcccd"
-```
-
-#aggregate across a day to create total activity variable
-```{r}
-daily_accel_tidy =
-  accel_tidy %>%
-  group_by(day_id) %>%
-  mutate(total_activity = sum(activity_counts)) %>%
-  distinct(total_activity) %>%
-  select(day_id, total_activity)
-
-daily_accel_tidy %>%
-  ggplot(aes(x = day_id, y = total_activity)) +
-  geom_point() +
-  geom_smooth()
-```
-
-#create plot to show fluctuation over each day
-##FIX THIS
-```{r}
-accel_tidy %>%
-  group_by(day_id) %>%
-  mutate(as.numeric(activity)) %>%
-  ggplot(aes(x = activity, y = activity_counts, color = day_id)) +
-   geom_point() 
-```
-
-##Unused code
-  arrange(desc(rank)) %>%
-  fct_reorder(product_name, ranking)
-  pivot_wider(
-    names_from = product_name, 
-    values_from = n_obs
-  ) %>%
+  brfss %>%
+  filter(year == "2006" | year == "2010",
+         locationabbr == "NY") %>%
+  group_by(year, response) %>%
+  summarize(mean_data_value = mean(data_value, na.rm = TRUE)) %>%
+  ggplot(aes(x = response, y = mean_data_value)) +
+  geom_col() +
+  facet_wrap(~year)
