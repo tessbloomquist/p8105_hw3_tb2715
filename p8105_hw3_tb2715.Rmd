@@ -232,6 +232,25 @@ It appears that in later weeks of the study, activity levels drop to only 1 acti
 
 #create plot to show fluctuation over each day
 ```{r}
+#fluctuation in activity counts over the hours in each day
+accel_tidy %>%
+  mutate(
+    hour = minute %/% 60,
+    hour = as.integer(hour),
+    unique_day = paste(week, day)) %>%
+  group_by(unique_day, hour) %>%
+  summarize(mean_activity_counts = mean(activity_counts)) %>%
+    ggplot(aes(x = hour, y = mean_activity_counts, color = unique_day)) +
+             geom_line() + 
+      labs(
+    title = "Distribution of Activity Counts Across MHours in a Day for Each Day of the study",
+    x = "Hours of the day",
+    y = "Activity count",
+    caption = "Data from accel dataset "
+  )
+ 
+
+#average activity level throughout the day based on days of the week
 accel_tidy %>%
   group_by(day_id) %>%
   ggplot(aes(x = minute, y = activity_counts, color = day)) +
@@ -239,7 +258,20 @@ accel_tidy %>%
    theme(axis.text.x = element_text(angle = 90))  + 
     labs(
     title = "Distribution of Activity Counts Across Minutes in a Day for Each Day of the Week",
-    x = "Minute of the daye",
+    x = "Minute of the day",
+    y = "Activity count",
+    caption = "Data from accel dataset "
+  )
+
+#weekend vs weekday comparison of activity levels
+accel_tidy %>%
+  group_by(weekend) %>%
+  ggplot(aes(x = minute, y = activity_counts, color = weekend)) +
+   geom_smooth() +
+   theme(axis.text.x = element_text(angle = 90))  + 
+    labs(
+    title = "Distribution of Activity Counts Across Minutes in a Day for Weekend vs Weekday",
+    x = "Minute of the day",
     y = "Activity count",
     caption = "Data from accel dataset "
   )
